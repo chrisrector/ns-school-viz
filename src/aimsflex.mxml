@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application   xmlns:mx="http://www.adobe.com/2006/mxml" 
+				  xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  minWidth="1024" minHeight="768" 
+          creationComplete="init()"
+          xmlns:aims="com.aims.*"> 
+  
+	<mx:Script> 
+		<![CDATA[ 
+      import com.aims.AddSchoolEvent;
+      import com.aims.HideSchoolDetailsEvent;
+      import com.aims.PointMarker;
+      import com.aims.School;
+      import com.aims.SchoolDetails;
+      import com.aims.SchoolList;
+      import com.aims.SchoolMarker;
+      import com.aims.SchoolPreview;
+      import com.aims.ShowSchoolDetailsEvent;
+      import com.aims.infoPanel;
+      import com.modestmaps.TweenMap;
+      import com.modestmaps.extras.HandCursor;
+      import com.modestmaps.extras.ZoomSlider;
+      import com.modestmaps.geo.Location;
+      import com.modestmaps.mapproviders.OpenStreetMapProvider;
+      import com.modestmaps.mapproviders.yahoo.YahooHybridMapProvider;
+      
+      import flash.events.Event;
+      import flash.net.URLLoader;
+      import flash.net.URLRequest;
+      
+      import mx.collections.ArrayCollection;
+      import mx.core.UIComponent;
+			//import nl.demonsters.debugger.MonsterDebugger;
+			
+			
+			
+			
+			[Bindable]private var _map:TweenMap;    
+			private var _mapUI:UIComponent; 
+			[Bindable]private var _initialLat:Number = 44.66;
+			[Bindable]private var _initialLong:Number = -63.66;
+			[Bindable]private var _initialZoom:Number = 10;
+			private var _mouseWheelZoomCenter:Location;
+			private var _mouseWheelZoom:int;
+			private var csvLoader:URLLoader = new URLLoader();
+			//private var db:MonsterDebugger;
+						
+			[Embed(source="img/marker.png")]
+			protected var MarkerImage:Class;
+      [Bindable]protected var school:School;
+      [Bindable]protected var schools:ArrayCollection=new ArrayCollection();
+			
+
+			
+			private function init():void
+			{
+				//db = new MonsterDebugger(this);
+				//MonsterDebugger.trace(this, "in init");
+				_map = new TweenMap(mappanel.width, mappanel.height, true, new OpenStreetMapProvider());  
+				_map.setCenterZoom(new Location(_initialLat, _initialLong), _initialZoom); 
+				mapCore();
+			}
+			
+			private function mapCore():void
+			{
+				_map.addEventListener(MouseEvent.MOUSE_WHEEL, mouseWheelHandler); 
+				_mapUI = new UIComponent();
+				_mapUI.addChild(_map);   
+				var zoomslider:ZoomSlider = new ZoomSlider(_map);
+				zoomslider.x = mappanel.width - zoomslider.width*2;
+				zoomslider.y = 30;
+				_mapUI.addChild(zoomslider);  
+				var handcursor:HandCursor = new HandCursor(_map);
+				_mapUI.addChild(handcursor);
+				mappanel.addChild(_mapUI);
+
+        
+				trace("here");
+				csvLoader.dataFormat = URLLoaderDataFormat.TEXT;
+				csvLoader.load(new URLRequest("data/schools.csv"));
+				csvLoader.addEventListener(Event.COMPLETE,loadSchoolsCSV);
+				
+				
+				
+				trace(this, "end of map core");
+			}
+			
+			private function loadSchoolsCSV(e:Event):void {
+				var str:String = csvLoader.data as String;
+        trace("csv string = " + str);
+				var arr:Array = str.split("\n");
+        
+        //split first line
+        var headerArr:Array = arr[0].split(',');
+        
+        
+				for (var i:int=1; i<arr.length; i++) {
+					var lineArr:Array = arr[i].split(',');
+          var tmpSchool:School = new School();
+          var schoolHash:Object = new Object();
+          
+          for (var j:int=0; j<lineArr.length; j++) {
+            //schoolHash[headerArr[j]] = lineArr[j];
+            tmpSchool[headerArr[j]] = lineArr[j];
+          }
+          //csv string = "id","board_num","code","school_name","addr1","addr2","tel",
+          //"fax","email","start_grade","end_grade","created_at","updated_at","lat","
+          //long","postal_code","ab_achievement","ic_achievement","ab_math","ic_math",
+          //"ab_language","ic_language","ab_science","ic_science","ab_engagement",
+          //"ic_engagement","ab_grade12mo","ic_grade12mo","ab_attendance","ic_attendance",
+          //"overall_performance","enrolment","PTR","SES","feeder_ach"
+          
+
+          //tmpSchool.id = schoolHash["id"];
+          //tmpSchool.school_name = schoolHash["school_name"];
+          
+          trace("now tmpSchool school name = " + tmpSchool.school_name);
+          schools.addItem(tmpSchool);
+            
+				}
+				//trace(arr[2][1]);
+        
+				
+				//addMarkers();
+        addSchoolMarkers();
+			}
+			
+
+      
+      private function addSchoolMarkers():void
+      {
+        for each (var school:School in this.schools){
+          var schoolMarker:SchoolMarker = new SchoolMarker();                      
+  
+          
+
+          //schoolMarker.addChild(markerImage);
+          schoolMarker.school = school;
+          schoolMarker.drawMarker();
+          schoolMarker.addEventListener(MouseEvent.CLICK, handleSchoolClick);      
+          _map.putMarker(new Location(school.lat, school.long), schoolMarker);                
+        } 
+      }
+			
+			private function mouseWheelHandler(e:MouseEvent):void {
+				if (e.delta < 0) {
+					_map.zoomOut();
+				}
+				else if (e.delta > 0) {
+					_map.zoomIn();
+				}
+				_mouseWheelZoomCenter = _map.getCenter();
+				_mouseWheelZoom = _map.getZoom();
+			} 
+			
+			
+			private function handleChangeProvider(event:Event):void
+			{
+				mappanel.removeAllChildren();
+				
+				if(event.target.label == "Virtual Earth")
+				{
+					_map = new TweenMap(mappanel.width, mappanel.height, true, new YahooHybridMapProvider());
+				}
+				else
+				{
+					_map = new TweenMap(mappanel.width, mappanel.height, true, new OpenStreetMapProvider());
+				}
+				
+				if(_mouseWheelZoomCenter != null && _mouseWheelZoom > 0)
+				{
+					_map.setCenterZoom(_mouseWheelZoomCenter, _mouseWheelZoom);         
+				}
+				else
+				{
+					_map.setCenterZoom(new Location(_initialLat, _initialLong), _initialZoom); 
+				}
+				mapCore(); 
+			}
+			
+//			private function handleMouseClick(event:MouseEvent):void
+//			{
+//				_panel.ptitle = event.target.schoolName;
+//				_panel.pdesc = event.target.schoolDesc;
+//				_panel.pmath = event.target.math;
+//				_panel.pscience = event.target.science;
+//			}
+      
+      private function handleSchoolClick(event:MouseEvent):void
+      {
+        this.school = event.target.school;
+        _schoolPreview.schoolSelected(event.target.school);
+        trace("clicked on school " + event.target.school.school_name);
+      }
+			
+      private function handleSchoolAdd(event:AddSchoolEvent):void
+      {
+        trace("in addSchoolHandler for school " + event.school["school_name"]);
+        _schoolList.addSchool(event.school);
+      }
+      
+      private function handleSchoolDetails(event:ShowSchoolDetailsEvent):void
+      {
+        trace("in handleSchoolDetails for school " + event.school["school_name"]);
+        //_schoolDetails.school = event.school;
+        _schoolDetails.handleShowEvent(school);
+          
+        currentState = "WithSchoolDetails";
+      }
+      
+      private function handleHideSchoolDetails(event:HideSchoolDetailsEvent):void
+      {
+        trace("in handleHideSchoolDetails for school " + event.school["school_name"]);
+        currentState = "NoSchoolDetails";
+      }
+      
+			
+
+      protected function _schoolDetails_hideSchoolDetailsEventHandler(event:HideSchoolDetailsEvent):void
+      {
+        // TODO Auto-generated method stub
+        trace("in handleHideSchoolDetails for school " + event.school["school_name"]);
+        currentState = "NoSchoolDetails";
+      }
+
+		]]>
+	</mx:Script>
+  
+  <mx:states>
+    <mx:State name="NoSchoolDetails">
+      <mx:SetProperty target="{_schoolDetails}" name="visible" value="false"/>
+      <mx:SetProperty target="{_schoolDetails}" 
+                      name="includeInLayout" value="false"/>
+    </mx:State>
+    <mx:State name="WithSchoolDetails">
+      <mx:SetProperty target="{_schoolDetails}" name="visible" value="true"/>
+      <mx:SetProperty target="{_schoolDetails}" 
+                      name="includeInLayout" value="true"/>
+    </mx:State>
+  </mx:states> 
+  
+  <mx:transitions>
+    
+    <mx:Transition id="toWithSchoolDetails" fromState="*" toState="WithSchoolDetails">
+      <mx:Sequence id="t1" targets="{[_schoolDetails]}">
+        <mx:SetPropertyAction target="{_schoolDetails}" name="includeInLayout"/>
+        <mx:SetPropertyAction name="visible"/>
+        <mx:Iris showTarget="true" duration="350"/>
+      </mx:Sequence>
+    </mx:Transition>
+    <mx:Transition id="toNoSchoolDetails" fromState="*" toState="NoSchoolDetails">
+      <mx:Sequence id="t2" targets="{[_schoolDetails]}">
+        <mx:Iris showTarget="false" duration="350"/>
+        <mx:SetPropertyAction target="{_schoolDetails}" name="includeInLayout"/>
+        <mx:SetPropertyAction name="visible"/>
+      </mx:Sequence>
+    </mx:Transition>
+  </mx:transitions>
+
+  
+  
+  <mx:Canvas>
+  
+    <mx:VBox>
+    	<mx:Canvas id="mappanel" width="1000" height="500"/> 
+    	<mx:HBox width="100%" horizontalAlign="center">
+    		<mx:Button label="Open Street Map" click="handleChangeProvider(event)"/>
+    		<mx:Button label="Virtual Earth" click="handleChangeProvider(event)"/>
+    	</mx:HBox>
+    </mx:VBox>
+    
+    <mx:VBox width="300" height="500">
+      <aims:SchoolPreview id="_schoolPreview" height="30%" width="100%" 
+                          addSchoolEvent="handleSchoolAdd(event)"
+                          showSchoolDetailsEvent="handleSchoolDetails(event)"
+                          >
+      </aims:SchoolPreview>
+      
+      <aims:SchoolList id="_schoolList" height="70%" width="100%">
+      </aims:SchoolList>
+    </mx:VBox>
+    
+    <aims:SchoolDetails id="_schoolDetails" x="300" visible="false"
+                        hideSchoolDetailsEvent="_schoolDetails_hideSchoolDetailsEventHandler(event)">
+      
+    </aims:SchoolDetails>
+    
+  </mx:Canvas>
+	
+</mx:Application>

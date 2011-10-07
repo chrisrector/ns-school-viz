@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" 
+                xmlns:flex="flare.flex.*"
+                width="450" height="500" 
+                creationComplete="init()" alpha="0.7" xmlns:aims="com.aims.*">
+  <mx:Script>
+    <![CDATA[
+      import com.aims.School;
+ 
+      import mx.collections.ArrayCollection;
+      import flash.geom.Rectangle;
+      import com.aims.SchoolCatChart;
+      
+      private var _containerheight:Number;
+      private var _containerwidth:Number;
+      [Bindable] public var school:School;
+      private var _bounds:Rectangle;
+      
+      
+      private function init():void
+      {
+        this.titleBar.addEventListener(MouseEvent.MOUSE_DOWN, moveWindow);
+        this.titleBar.addEventListener(MouseEvent.MOUSE_UP, stopWindow); 
+        
+        _bounds = new Rectangle(0, 0, 150, 70);
+        
+       
+          
+      }
+      
+      public function handleShowEvent(tmpSchool:School):void {
+        
+        school = tmpSchool;
+        cat_acheivement.catData = school.getAcForAttr("achievement");
+        //cat_math._catName = "math";
+        cat_math.catData = school.getAcForAttr("math");
+        cat_science.catData = school.getAcForAttr("science");
+        cat_language.catData = school.getAcForAttr("language");
+        cat_engagement.catData = school.getAcForAttr("engagement");
+        cat_grade12mo.catData = school.getAcForAttr("grade12mo");
+        cat_attendance.catData = school.getAcForAttr("attendance");
+        trace("in schooldetails handleShowEvent");
+      }
+  
+      
+      public function set containerWidth(width:Number):void
+      {
+        _containerwidth = width;
+      }
+      public function set containerHeight(height:Number):void
+      {
+        _containerheight = height;
+      }
+      
+      private function moveWindow( evt:MouseEvent ):void
+      {
+        var limitdrag:Rectangle = new Rectangle(0, 0, _containerwidth-this.width, _containerheight-this.height);
+        this.startDrag(false, limitdrag);
+      }	
+      private function stopWindow( evt:MouseEvent ):void
+      {
+        this.stopDrag();
+      }
+      
+      private function getSchoolName():String {
+        var result:String;
+        if ( this.school == null ) {
+          result = "Please select a school";
+        } else {
+          result = this.school.school_name;
+        }
+        return result;
+      }
+      
+      private function hideSchoolDetails(event:Event):void {
+        var schoolName:String = this.school["school_name"];
+        trace("hiding school details for " + schoolName);
+        var e:HideSchoolDetailsEvent = new HideSchoolDetailsEvent("hideSchoolDetailsEvent", this.school);
+        dispatchEvent(e);
+      }
+      
+      
+    ]]>
+  </mx:Script>
+  <mx:Metadata>
+    [Event(name="hideSchoolDetailsEvent", type="com.aims.HideSchoolDetailsEvent")]
+  </mx:Metadata>
+  
+  <mx:Stroke id="s1" color="blue" weight="30"/>
+  <mx:Stroke id="s2" color="red" weight="10"/>
+  
+  <mx:VBox id="detailBox" horizontalAlign="left" width="100%" height="100%" verticalAlign="top">
+    <mx:HBox width="100%">
+      <mx:Label id="school_name" text="{school.school_name}" fontSize="16" width="90%"/>
+      <mx:Button id="hideSchoolDetailsButton" label="Hide" click="hideSchoolDetails(event)"
+                 enabled="true" right="1"/>
+    </mx:HBox>
+    
+<!--    //csv string = "id","board_num","code","school_name","addr1","addr2","tel",
+    //"fax","email","start_grade","end_grade","created_at","updated_at","lat","
+    //long","postal_code","ab_achievement","ic_achievement","ab_math","ic_math",
+    //"ab_language","ic_language","ab_science","ic_science","ab_engagement",
+    //"ic_engagement","ab_grade12mo","ic_grade12mo","ab_attendance","ic_attendance",
+    //"overall_performance","enrolment","PTR","SES","feeder_ach"-->
+    
+    <mx:HBox>
+    
+      <mx:VBox>
+          
+        <aims:SchoolCatChart id="cat_acheivement" _catName="achievement" _school="{school}">     
+        </aims:SchoolCatChart>
+            
+        <aims:SchoolCatChart id="cat_math" _catName="math" _school="{school}">     
+        </aims:SchoolCatChart>
+        
+        <aims:SchoolCatChart id="cat_language" _catName="language" _school="{school}">     
+        </aims:SchoolCatChart>
+        
+        <aims:SchoolCatChart id="cat_science" _catName="science" _school="{school}">     
+        </aims:SchoolCatChart>
+        
+  
+        
+        <aims:SchoolCatChart id="cat_engagement" _catName="engagement" _school="{school}">     
+        </aims:SchoolCatChart>
+        
+        <aims:SchoolCatChart id="cat_grade12mo" _catName="grade12mo" _school="{school}">     
+        </aims:SchoolCatChart>
+        
+        <aims:SchoolCatChart id="cat_attendance" _catName="attendance" _school="{school}">     
+        </aims:SchoolCatChart>
+        
+      </mx:VBox>
+      
+    </mx:HBox>
+ 
+
+  </mx:VBox>	
+</mx:TitleWindow>

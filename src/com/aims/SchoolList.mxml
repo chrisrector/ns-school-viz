@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" 
+                xmlns:flex="flare.flex.*"
+                width="100%" height="200" 
+                alpha="0.7"
+                creationComplete="init()">
+  
+  <mx:Script>
+    <![CDATA[
+      import mx.collections.ArrayCollection;
+      
+      [Bindable]
+      private var schools:ArrayCollection;
+      private var _containerheight:Number;
+      private var _containerwidth:Number;
+      
+      private function init():void
+      {
+        trace("initializing school list panel");
+        this.titleBar.addEventListener(MouseEvent.MOUSE_DOWN, moveWindow);
+        this.titleBar.addEventListener(MouseEvent.MOUSE_UP, stopWindow); 
+        
+        schools = new ArrayCollection();
+        
+      }
+      
+      public function loadSchools(schoolArray:ArrayCollection):void
+      {
+        trace("loading schools in schoolList");
+        schools = new ArrayCollection();
+        this.schools = schoolArray;
+        for each (var school:School in this.schools){
+          
+        }
+      
+      }
+      
+      public function addSchool(schoolToAdd:School):void{
+        
+        if (!schools.contains(schoolToAdd)) {     
+          this.schools.addItem(schoolToAdd);
+        }
+      }
+      
+      private function moveWindow( evt:MouseEvent ):void
+      {
+        var limitdrag:Rectangle = new Rectangle(0, 0, _containerwidth-this.width, _containerheight-this.height);
+        this.startDrag(false, limitdrag);
+      }	
+      private function stopWindow( evt:MouseEvent ):void
+      {
+        this.stopDrag();
+      }
+      
+      public function set containerWidth(width:Number):void
+      {
+        _containerwidth = width;
+      }
+      public function set containerHeight(height:Number):void
+      {
+        _containerheight = height;
+      }
+      
+      public function removeSchool():void {
+          schools.removeItemAt(grid.selectedIndex);
+      }
+      
+    ]]>
+  </mx:Script>
+  
+
+    <mx:DataGrid id="grid" width="100%" height="100%"
+                 sortableColumns="false"
+                 dataProvider="{schools}">
+      <mx:columns>
+        <mx:DataGridColumn headerText=" " width="5">
+          <mx:itemRenderer>
+            <mx:Component>
+              <mx:Button label="x" click="outerDocument.removeSchool()"/>
+            </mx:Component>
+          </mx:itemRenderer>
+        </mx:DataGridColumn>
+
+        <mx:DataGridColumn headerText="Title" dataField="school_name" width="250" />
+        
+      </mx:columns>
+    </mx:DataGrid>
+</mx:TitleWindow>
+  
+

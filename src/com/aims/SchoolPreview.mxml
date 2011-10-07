@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" 
+                xmlns:flex="flare.flex.*"
+                creationComplete="init()" alpha="0.7">
+  <mx:Script>
+    <![CDATA[
+      import com.aims.AddSchoolEvent;
+      import com.aims.HideSchoolDetailsEvent;
+      import com.aims.School;
+      import com.aims.ShowSchoolDetailsEvent;
+      
+      import flash.geom.Rectangle;
+      
+      import mx.charts.ChartItem;
+      import mx.charts.chartClasses.Series;
+      import mx.charts.series.BarSeries;
+      import mx.charts.series.items.BarSeriesItem;
+      import mx.collections.ArrayCollection;
+      import mx.graphics.IFill;
+      import mx.graphics.SolidColor;
+      import mx.charts.LinearAxis;
+
+      
+      private var _containerheight:Number;
+      private var _containerwidth:Number;
+      [Bindable] public var school:School;
+      private var _bounds:Rectangle;
+      
+      [Bindable] public var schoolData:ArrayCollection = new ArrayCollection([
+        {attr:"Achievement", Absolute:12, InContext:9}
+      ]);
+      
+      [Bindable] public var absScore:String = "";
+      [Bindable] public var relScore:String = "";
+      
+      
+      [Bindable] public var expenses:ArrayCollection = new ArrayCollection([
+        {Month:"Jan", Profit:2000, Expenses:1500},
+        {Month:"Feb", Profit:1000, Expenses:200},
+        {Month:"Mar", Profit:1500, Expenses:500}
+      ]);
+
+      
+      
+      private function init():void
+      {
+        this.titleBar.addEventListener(MouseEvent.MOUSE_DOWN, moveWindow);
+        this.titleBar.addEventListener(MouseEvent.MOUSE_UP, stopWindow); 
+        
+        _bounds = new Rectangle(0, 0, 150, 70);
+        
+        //absBar.setStyle("labelPosition", "outside");
+        //icBar.setStyle("labelPosition", "outside");
+        //previewChart.setStyle("barWidthRatio", 0.5);
+        
+
+      }
+      
+      public function schoolSelected(tmpSchool:School):void {
+        
+        school = tmpSchool;
+        
+        this.absScore = School.numToLetter(school.ab_overall_perf);
+        this.relScore = School.numToLetter(school.ic_overall_perf);
+        schoolNameLabel.text = school.school_name;
+        //previewChart.visible = true;
+        scoreSection.visible = true;
+        addSchoolButton.enabled = "true";
+        showSchoolDetailsButton.enabled = "true";
+        
+      }
+  
+      
+      public function set containerWidth(width:Number):void
+      {
+        _containerwidth = width;
+      }
+      public function set containerHeight(height:Number):void
+      {
+        _containerheight = height;
+      }
+      
+      private function moveWindow( evt:MouseEvent ):void
+      {
+        var limitdrag:Rectangle = new Rectangle(0, 0, _containerwidth-this.width, _containerheight-this.height);
+        this.startDrag(false, limitdrag);
+      }	
+      private function stopWindow( evt:MouseEvent ):void
+      {
+        this.stopDrag();
+      }
+      
+      private function getSchoolName():String {
+        var result:String;
+        if ( this.school == null ) {
+          result = "Please select a school";
+        } else {
+          result = this.school.school_name;
+        }
+        return result;
+      }
+      
+      /* converts the number grade to a letter grade for the x axis
+      */
+      public function defineHorizontalLabel(
+        cat:Object, 
+        pcat:Object,
+        ax:LinearAxis):String 
+      {
+        return School.numToLetter(int(cat));
+      }
+      
+      private function setDataLabel(element:ChartItem, series:Series):String {
+        // Get a refereence to the current data element.
+        var data:BarSeriesItem = BarSeriesItem(element);        
+        
+        // Get a reference to the current series.        
+        var currentSeries:BarSeries = BarSeries(series);
+        
+        var item:BarSeriesItem = BarSeriesItem(element);
+
+        //var s:String = item.item.Absolute;
+
+        trace("leaving setDateLabel for " + currentSeries.xField);
+        return School.numToLetter(int(item.item[currentSeries.xField]));        
+      }
+      
+/*       private function absBarFillFunction(element:ChartItem, index:Number):IFill {
+        var c:SolidColor = new SolidColor(0x00CC00);
+        var hexColour:uint;
+        
+        // Get a refereence to the current data element.
+        var data:BarSeriesItem = BarSeriesItem(element);        
+        
+        // Get a reference to the current series.        
+        
+                
+        c.color = School.getColourForNum(int(absBar.items[index].xValue));
+        return c;
+      }
+      
+      private function icBarFillFunction(element:ChartItem, index:Number):IFill {
+        var c:SolidColor = new SolidColor(0x00CC00);
+        var hexColour:uint;
+        
+        // Get a refereence to the current data element.
+        var data:BarSeriesItem = BarSeriesItem(element);        
+        
+        // Get a reference to the current series.        
+        
+        
+        c.color = School.getColourForNum(int(icBar.items[index].xValue));
+        return c;
+      } */
+
+
+      private function addSchooToList(event:Event):void {
+        var schoolName:String = this.school["school_name"];
+        trace("Adding school " + schoolName);
+        var e:AddSchoolEvent = new AddSchoolEvent("addSchoolEvent", this.school);
+        dispatchEvent(e);
+      }
+      
+      private function showSchoolDetails(event:Event):void {
+        var schoolName:String = this.school["school_name"];
+        trace("Showing school details for " + schoolName);
+        var e:ShowSchoolDetailsEvent = new ShowSchoolDetailsEvent("showSchoolDetailsEvent", this.school);
+        dispatchEvent(e);
+      }
+      
+      public function getAcForAttr(attrName:String):ArrayCollection {
+        
+        var ac:ArrayCollection = new ArrayCollection();
+        
+        return ac;
+      }
+
+      
+    ]]>
+  </mx:Script>
+  <mx:Metadata>
+    [Event(name="addSchoolEvent", type="com.aims.AddSchoolEvent")]
+    [Event(name="showSchoolDetailsEvent", type="com.aims.ShowSchoolDetailsEvent")]
+  </mx:Metadata>
+ 
+  <mx:SeriesInterpolate id="changeEffect" duration="500"/>
+  
+  <mx:VBox id="detailBox" horizontalAlign="left" width="100%" height="100%" verticalAlign="top">
+    <mx:Label id="schoolNameLabel" text="Click on a school to see details" fontSize="14"/>
+
+    <mx:VBox id="scoreSection" visible="false">
+      <mx:Label text="Overal Acheivement" fontSize="12"/>
+         
+      <mx:Label id="absScoreLabel" text="Absolute: {absScore}" fontSize="12"/>
+      <mx:Label id="relScoreLabel" text="In Context: {relScore}" fontSize="12"/>  
+    
+    </mx:VBox>
+    
+    
+    
+ 
+    
+    <mx:Button id="addSchoolButton" label="Add to list" click="addSchooToList(event)"
+               enabled="false"/>
+    <mx:Button id="showSchoolDetailsButton" label="Details" click="showSchoolDetails(event)"
+               enabled="false"/>
+
+  </mx:VBox>	
+</mx:TitleWindow>

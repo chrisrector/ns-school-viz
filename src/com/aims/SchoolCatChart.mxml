@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" 
+                xmlns:flex="flare.flex.*"
+                width="200" height="80" 
+                creationComplete="init()">
+  <mx:Script>
+    <![CDATA[
+      import com.aims.School;
+      
+      import flash.geom.Rectangle;
+      
+      import mx.charts.ChartItem;
+      import mx.charts.HitData;
+      import mx.charts.chartClasses.Series;
+      import mx.charts.series.BarSeries;
+      import mx.charts.series.items.BarSeriesItem;
+      import mx.collections.ArrayCollection;
+
+      private var _containerheight:Number;
+      private var _containerwidth:Number;
+      private var _bounds:Rectangle;
+      [Bindable] public var _catName:String = "this category";
+      [Bindable] public var _school:School;
+      [Bindable] public var catData:ArrayCollection;
+      
+      /*[Bindable] public var catData:ArrayCollection = new ArrayCollection([
+        {attr:"Achievement", 
+          Absolute:"8", 
+          InContext:"10"}
+      ]);*/
+
+      
+      
+      private function init():void
+      {
+        
+        _bounds = new Rectangle(0, 0, 150, 70);
+        //catData = 
+      }
+   
+      public function set containerWidth(width:Number):void
+      {
+        _containerwidth = width;
+      }
+      public function set containerHeight(height:Number):void
+      {
+        _containerheight = height;
+      }
+      
+      private function moveWindow( evt:MouseEvent ):void
+      {
+        var limitdrag:Rectangle = new Rectangle(0, 0, _containerwidth-this.width, _containerheight-this.height);
+        this.startDrag(false, limitdrag);
+      }	
+      private function stopWindow( evt:MouseEvent ):void
+      {
+        this.stopDrag();
+      }
+      
+      /* converts the number grade to a letter grade for the x axis
+      */
+      public function defineHorizontalLabel(
+        cat:Object, 
+        pcat:Object,
+        ax:LinearAxis):String 
+      {
+        return School.numToLetter(int(cat));
+      }
+      
+      private function setDataLabel(element:ChartItem, series:Series):String {
+        // Get a refereence to the current data element.
+        var data:BarSeriesItem = BarSeriesItem(element);        
+        
+        // Get a reference to the current series.        
+        var currentSeries:BarSeries = BarSeries(series);
+        
+        var item:BarSeriesItem = BarSeriesItem(element);
+        
+        //var s:String = item.item.Absolute;
+        
+        trace("leaving setDateLabel for " + currentSeries.xField);
+        return School.numToLetter(int(item.item[currentSeries.xField]));        
+      }
+      
+      public function dtFunc(hd:HitData):String {
+        if ( hd.item.Absolute ) {
+          return School.numToLetter(hd.item.Absolute);
+        }
+        else {
+          return School.numToLetter(hd.item.InContext);
+        }
+
+      }
+
+
+      
+    ]]>
+  </mx:Script>
+  
+  <mx:Stroke id="s1" color="blue" weight="30"/>
+  <mx:Stroke id="s2" color="red" weight="10"/>
+  
+    <mx:HBox>
+      
+    
+  <!--
+      <mx:Label id="cat_name" text="{_catName}" fontSize="10" left="5"/>
+  -->
+      <mx:BarChart id="myChart" dataProvider="{catData}" showDataTips="true" height="60" width="180"
+                   type="overlaid" dataTipFunction="dtFunc">
+        <mx:verticalAxis>
+          <mx:CategoryAxis 
+            dataProvider="{catData}" 
+            categoryField="attr"
+            id="vAxis"
+            />
+        </mx:verticalAxis>
+        
+        <mx:horizontalAxisRenderers>
+          <mx:AxisRenderer 
+            axis="{vAxis}"                 
+            showLabels="false"
+            showLine="false"
+            />
+        </mx:horizontalAxisRenderers>
+        
+        <mx:verticalAxisRenderers>
+          <mx:AxisRenderer 
+            axis="{hAxis}"                 
+            showLabels="false"
+            showLine="false"
+            />
+        </mx:verticalAxisRenderers>
+  
+        
+        <mx:horizontalAxis>
+          
+          <mx:LinearAxis 
+            id="hAxis"
+            minimum="0" 
+            maximum="14"
+            interval="3" 
+            labelFunction="defineHorizontalLabel"/>
+          
+        </mx:horizontalAxis>
+        <mx:series>
+          <mx:BarSeries
+            yField="attr" 
+            xField="Absolute" 
+            displayName="Absolute"
+            maxBarWidth="12"
+            />
+          <mx:BarSeries 
+            yField="attr" 
+            xField="InContext" 
+            displayName="InContext"
+            maxBarWidth="6"
+            />
+        </mx:series>
+      </mx:BarChart>
+      
+    </mx:HBox>
+
+</mx:Canvas>

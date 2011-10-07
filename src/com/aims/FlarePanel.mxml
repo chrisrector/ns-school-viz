@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" 
+           xmlns:flex="flare.flex.*"
+           width="300" height="200"
+           alpha="0.7"
+           creationComplete="init()">
+  
+  <mx:Script>
+    <![CDATA[
+      import flare.scale.ScaleType;
+      import flare.util.Shapes;
+      import flare.vis.Visualization;
+      import flare.vis.data.Data;
+      import flare.vis.operator.encoder.ColorEncoder;
+      import flare.vis.operator.layout.AxisLayout;
+      
+      import flash.geom.Rectangle;
+      
+      private var _containerheight:Number;
+      private var _containerwidth:Number;
+      private var vis:Visualization;
+      private var _bounds:Rectangle;
+      
+      private function init():void
+      {
+        this.titleBar.addEventListener(MouseEvent.MOUSE_DOWN, moveWindow);
+        this.titleBar.addEventListener(MouseEvent.MOUSE_UP, stopWindow);
+        
+        _bounds = new Rectangle(0, 0, 250, 70);
+        
+
+        vis = new Visualization(getData(2,13));
+        vis.bounds = _bounds;
+        vis.data.nodes.setProperties({
+          shape: Shapes.HORIZONTAL_BAR,
+          lineAlpha: 0,
+          size: 2.5 * _bounds.height / vis.data.nodes.length
+        });
+        vis.operators.add(new AxisLayout("data.x", "data.y", true, false));
+        vis.operators.add(new ColorEncoder("data.s", "nodes", "fillColor", ScaleType.CATEGORIES));
+        vis.xyAxes.yAxis.showLines = false;
+        vis.update();
+        
+        fvis.visualization.addChild(vis);
+        vis.x = 50; vis.y = 20;
+        
+//        var spr:Sprite = new Sprite();
+//        spr.graphics.beginFill(0x000000,1);
+//        spr.graphics.drawCircle(100,100,5);
+//        spr.graphics.drawCircle(200,100,10);
+//        spr.graphics.endFill();
+//        fvis.setActualSize(100, 100);
+//        fvis.visualization.addChild(spr);
+        
+        //You should be able to see two black circles on white background.
+        
+        //You can access the visualization object via "fvis.visualization"
+        //FlareVis is a class extends from Canvas that contains the visualization object inside
+      }
+      
+      public function set containerWidth(width:Number):void
+      {
+        _containerwidth = width;
+      }
+      public function set containerHeight(height:Number):void
+      {
+        _containerheight = height;
+      }
+      
+      private function moveWindow( evt:MouseEvent ):void
+      {
+        var limitdrag:Rectangle = new Rectangle(0, 0, _containerwidth-this.width, _containerheight-this.height);
+        this.startDrag(false, limitdrag);
+      }	
+      private function stopWindow( evt:MouseEvent ):void
+      {
+        this.stopDrag();
+      } 
+      
+      public static function getData(N:int, M:int):Data
+      {
+        var data:Data = new Data();
+        
+        
+        for (var i:uint=0; i<N; ++i) {
+          for (var j:uint=0; j<M; ++j) {
+            var s:String = String(i<10?"0"+i:i);
+            data.addNode({
+              y:s, s:j, x: int(1 + 10*Math.random())
+            });
+          }
+        }
+        return data;
+      }
+      
+      //<flex:FlareVis id="fvis" backgroundColor="0x999999"/>
+
+      
+    ]]>
+    
+  </mx:Script>
+  
+  <mx:VBox horizontalAlign="left" width="100%" height="100%" verticalAlign="top">
+           
+    
+    <mx:Label id="school_name" text="hello" fontSize="16"/>
+    <flex:FlareVis id="fvis" backgroundColor="0x999999"
+                   visHeight="50"
+                   visWidth="200"/>
+    
+  </mx:VBox>
+  
+</mx:TitleWindow>
